@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import axios from 'axios';
 import Header from '../../components/ui/Header';
 import Sidebar from '../../components/ui/Sidebar';
 import Breadcrumb from '../../components/ui/Breadcrumb';
@@ -60,14 +61,7 @@ const AddEditFoodItem = () => {
     price: '',
     discountPrice: '',
     category: '',
-    cuisine: '',
-    dietary: [],
-    spiceLevel: 'none',
-    prepTime: '',
-    servingSize: '',
-    calories: '',
-    protein: '',
-    carbs: ''
+    // Removed unnecessary fields
   });
 
   const [ingredients, setIngredients] = useState(isEditing ? mockEditIngredients : []);
@@ -90,16 +84,16 @@ const AddEditFoodItem = () => {
 
     // Food name validation
     if (!formData?.name?.trim()) {
-      newErrors.name = 'Food name is required and cannot be empty';
+      newErrors.name = 'Food name is required';
     } else if (formData?.name?.trim()?.length < 3) {
-      newErrors.name = 'Food name must be at least 3 characters long';
+      newErrors.name = 'Food name must be at least 3 characters';
     } else if (formData?.name?.trim()?.length > 50) {
       newErrors.name = 'Food name cannot exceed 50 characters';
     }
 
     // Category validation
     if (!formData?.category) {
-      newErrors.category = 'Please select a food category';
+      newErrors.category = 'Please select a category';
     }
 
     // Price validation
@@ -118,21 +112,21 @@ const AddEditFoodItem = () => {
 
     // Description validation
     if (!formData?.description?.trim()) {
-      newErrors.description = 'Please provide a description for the food item';
+      newErrors.description = 'Description is required';
     } else if (formData?.description?.trim()?.length < 10) {
-      newErrors.description = 'Description must be at least 10 characters long';
+      newErrors.description = 'Description must be at least 10 characters';
     } else if (formData?.description?.trim()?.length > 500) {
       newErrors.description = 'Description cannot exceed 500 characters';
     }
 
     // Image validation
     if (images?.length === 0) {
-      newErrors.images = 'At least one image is required to showcase the food item';
+      newErrors.images = 'At least one image is required';
     }
 
     // Preparation time validation
     if (formData?.prepTime && (parseInt(formData?.prepTime) < 1 || parseInt(formData?.prepTime) > 240)) {
-      newErrors.prepTime = 'Preparation time must be between 1 and 240 minutes';
+      newErrors.prepTime = 'Preparation time must be 1-240 minutes';
     }
 
     setErrors(newErrors);
@@ -152,22 +146,20 @@ const AddEditFoodItem = () => {
     setIsSaving(true);
     
     try {
-      // Simulate API call with better feedback
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const savedData = {
-        ...formData,
-        ingredients,
-        allergens,
-        images,
-        id: isEditing ? editingItemId : Date.now()?.toString(),
-        createdAt: isEditing ? mockEditData?.createdAt : new Date()?.toISOString(),
-        updatedAt: new Date()?.toISOString()
-      };
+      const apiUrl = isEditing ? `/api/products/${editingItemId}` : '/api/products';
+      const method = isEditing ? 'PUT' : 'POST';
 
-      console.log('Saved food item:', savedData);
-      
-      // Show success message
+      const response = await axios({
+        method,
+        url: apiUrl,
+        data: {
+          ...formData,
+          ingredients,
+          allergens,
+          image_url: images[0]?.url // Assuming the first image is the main one
+        }
+      });
+
       const successMessage = isEditing 
         ? `✅ "${formData?.name}" has been updated successfully!`
         : `✅ "${formData?.name}" has been added to your menu!`;
